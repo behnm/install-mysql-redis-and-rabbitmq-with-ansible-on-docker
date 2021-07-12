@@ -1,0 +1,33 @@
+Vagrant.configure("2") do |config|
+
+  # Operating system distro
+  config.vm.box = "bento/ubuntu-20.04"
+  
+  # Resource of VM
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 1024
+    v.cpus = 2
+  end
+  
+  # eth1 network IP address
+  config.vm.network "private_network", ip: "10.1.1.13"
+  
+  # Hostname of node3
+  config.vm.hostname = "node3"
+  
+  # Shell commands for installing dependencies, Docker
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt update -y
+	sudo apt install python3-setuptools vim python3-pip software-properties-common gnupg-agent curl ca-certificates apt-transport-https alien  -y
+	sudo apt install alien
+	sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+	sudo pip install docker-compose
+	pip install docker-compose
+	sudo  pip install docker
+	sudo apt install docker.io -y
+	sudo systemctl enable docker
+	sudo systemctl start docker
+	sudo docker network create mynet
+  SHELL
+
+end

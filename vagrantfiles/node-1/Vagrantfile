@@ -1,0 +1,49 @@
+Vagrant.configure("2") do |config|
+
+  # Operating system distro
+  config.vm.box = "bento/ubuntu-20.04"
+  
+  # Resource of VM
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 2048
+    v.cpus = 2
+  end
+  
+  # eth1 network IP address
+  config.vm.network "private_network", ip: "10.1.1.11"
+  
+  # Hostname of node1
+  config.vm.hostname = "node1"
+  
+  # Copy files from local host to node1
+  config.vm.provision "file", source: "E:/vagrant/ansible", destination: "/tmp/ansible"
+  
+  # Expose port to rabbitMQ dashboard
+  config.vm.network :forwarded_port, guest: 15672, host: 15672
+  
+  # Shell commands for installing dependencies, Docker, ansible and also run playbooks
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt update -y
+	sudo apt install python3-setuptools vim python3-pip software-properties-common gnupg-agent curl ca-certificates apt-transport-https alien  -y
+	sudo apt install alien
+	sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+	sudo pip install docker-compose
+	pip install docker-compose
+	sudo  pip install docker
+	sudo apt install docker.io -y
+	sudo systemctl enable docker
+	sudo systemctl start docker
+	sudo docker network create mynet
+    sudo sudo apt install software-properties-common -y
+	sudo sudo add-apt-repository --yes --update ppa:ansible/ansible
+    sudo apt install ansible -y
+	sudo cp -r /tmp/ansible /etc/
+	sudo echo '10.1.1.11 redis1' >> /etc/hosts 
+	sudo echo '10.1.1.12 redis2' >> /etc/hosts
+	sudo echo '10.1.1.13 redis3' >> /etc/hosts
+	sudo ansible-playbook /etc/ansible/playbooks/mysql/mysql.yml;
+	sudo ansible-playbook /etc/ansible/playbooks/rabbit/rabbit.yaml  --vault-password-file /etc/ansible/sensitive_files/rabbit_pass.txt
+	sudo ansible-playbook /etc/ansible/playbooks/redis/redis.yml
+  SHELL
+
+end
