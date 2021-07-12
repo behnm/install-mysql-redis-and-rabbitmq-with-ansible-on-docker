@@ -1,0 +1,16 @@
+---
+# username and password of rabbitMQ console , which is defined in vault file
+rabbit_user: "{{ vault_rabbit_user }}"
+rabbit_pass: "{{ vault_rabbit_pass }}"
+
+# List of mysql node names
+rabbit_nodes: [node1, node2, node3]
+
+# Mysql image name
+rabbit_image: bitnami/rabbitmq
+
+# Mysql image version
+rabbit_image_version: latest
+
+# Container network name
+container_network: mynet

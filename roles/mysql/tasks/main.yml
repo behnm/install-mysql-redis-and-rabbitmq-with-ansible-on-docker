@@ -1,0 +1,88 @@
+---
+# create directory for move mysql files
+- name: Creates directory
+  file:
+    path: "{{ mysql_folder }}"
+    state: directory
+
+# create directory for persist data of mysql 
+- name: Creates directory
+  file:
+    path: "{{ mysql_datadir }}"
+    state: directory
+
+# move mysql files for building docker image
+- name: copy mysql files to destination
+  copy:
+    src: "{{ item }}"
+    dest: "{{ mysql_folder }}"
+    mode: 0755
+  with_items: "{{ mysql_files }}"
+
+# make the appropiate my.cnf and mysql-cluster.cnf files and move to destination folder
+- name: copy  my.cnf and mysql-cluster file   
+  template:  
+    src: "{{ item }}.j2"  
+    dest: "{{ mysql_folder }}/cnf/{{item}}.cnf"
+    mode: 0644
+  with_items:
+     - my
+     - mysql-cluster
+
+# Build mysql docker image
+- name: Build an image and push it to a private repo
+  docker_image:
+    path: "{{ mysql_folder }}/"
+    name: "{{ mysql_image }}"
+    tag: "{{ mysql_image_version }}"
+    push: no
+
+# Remove old conatainers
+- name: Remove container
+  docker_container:
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ mysql_nodes }}"
+  ignore_errors: yes
+
+# Run mysql node 
+- name: Container data mysql node
+  docker_container:
+    name: "{{ mysql_nodes[3] }}"
+    image: "{{ mysql_image }}:{{ mysql_image_version }}"
+    networks:
+      - name: "{{ container_network }}"
+    env: 
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+    volumes: "{{ mysql_data_path }}"
+    command: mysqld
+
+# Run mysql data node 1
+- name: Container data node 1
+  docker_container:
+    name: "{{ mysql_nodes[1] }}"
+    image: "{{ mysql_image }}:{{ mysql_image_version }}"
+    networks:
+      - name: "{{ container_network }}"
+    volumes: "{{ mysql_data_path }}"
+    command: ndbd
+
+# Run mysql data node 2
+- name: Container data node 2
+  docker_container:
+    name: "{{ mysql_nodes[2] }}"
+    image: "{{ mysql_image }}:{{ mysql_image_version }}"
+    networks:
+      - name: "{{ container_network }}"
+    volumes: "{{ mysql_data_path }}"
+    command: ndbd
+
+# Run mysql management node
+- name: Container sql management
+  docker_container:
+    name: "{{ mysql_nodes[0] }}"
+    image: "{{ mysql_image }}:{{ mysql_image_version }}"
+    networks:
+      - name: "{{ container_network }}"
+    command: ndb_mgmd
+

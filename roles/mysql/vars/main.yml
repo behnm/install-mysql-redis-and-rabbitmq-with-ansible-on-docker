@@ -1,0 +1,24 @@
+---
+# Mysql folder for Dockerfile building
+mysql_folder: /mysql_folder
+
+# Mysql persist data folder
+mysql_datadir: /data
+
+# List of files for copy 
+mysql_files: [docker-entrypoint.sh, Dockerfile, healthcheck.sh, prepare-image.sh, inspec, cnf ]
+
+# List of mysql node names
+mysql_nodes: [mng_node, data_node1, data_node2, mysql_node]
+
+# Mysql image name
+mysql_image: mysql-cluster
+
+# Mysql image version
+mysql_image_version: v1
+
+# Container network name
+container_network: mynet
+
+# Mysql data path
+mysql_data_path: /data:/var/lib/mysql

@@ -1,0 +1,136 @@
+---
+
+# create directory redis 
+- name: Creates directory- /etc/redis
+  file:  
+    path: "{{ redis_folder }}"
+    state: directory
+
+# create directory redis 
+- name: Creates directory- /redis
+  file:  
+    path: "{{ redis_folder1 }}"
+    state: directory
+
+#- copy master file
+- name:  Copy file Master
+  template: 
+    src: redis-m.conf.j2   
+    dest: "{{ redis_folder }}/redis-{{ MASTER }}.conf" 
+    mode: 0777
+
+# Cpoy Slave files
+- name: Copy file slave
+  template: 
+    src: redis-s.conf.j2  
+    dest: "{{ redis_folder }}/redis-{{ SLAVE }}.conf" 
+    mode: 0777
+
+# Copy redis-cli template file
+- name: Copy file Redis-CLI
+  template: 
+    src: redis-cli.sh.j2  
+    dest: "{{ redis_folder }}/redis-cli.sh"
+    mode: 0777
+  when: inventory_hostname == "redis1"
+
+# Remove old conatainers
+- name:  Delete Master containers
+  docker_container:
+    name: "redis-{{ MASTER }}"
+    state: absent
+  ignore_errors: yes
+
+# Remove old conatainers
+- name:  Delete Redis containers SLAVE
+  docker_container:
+    name: "redis-{{ SLAVE }}"
+    state: absent
+  ignore_errors: yes
+
+# Run redis master node 
+- name: Docker run master node
+  docker_container:
+    name: "redis-{{ MASTER }}"
+    image: "{{ redis_image }}"
+    networks:
+      - name: "{{ container_network }}"
+    env: 
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+    volumes: 
+    - "{{ redis_folder1 }}/redis-{{ MASTER }}:/data"
+    - "{{ redis_folder }}/redis-{{ MASTER }}.conf:/usr/local/etc/redis/redis.conf"
+    command: redis-server {{ redis_docker_configpath }}
+    published_ports: 
+    - "{{ MASTER_PORTS }}:{{ MASTER_PORTS }}"
+    - "{{ MASTER_PORTS1 }}:{{ MASTER_PORTS1 }}"
+
+# Run redis slave node 
+- name: Docker run slave node
+  docker_container:
+    name: "redis-{{ SLAVE }}"
+    image: "{{ redis_image }}"
+    networks:
+      - name: "{{ container_network }}"
+    env: 
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+    volumes: 
+    - "{{ redis_folder1 }}/redis-{{ SLAVE }}:/data"
+    - "{{ redis_folder }}/redis-{{ SLAVE }}.conf:/usr/local/etc/redis/redis.conf"
+    command: redis-server {{ redis_docker_configpath }}
+    published_ports: 
+    - "{{ SLAVE_PORTS }}:{{ SLAVE_PORTS }}"
+    - "{{ SLAVE_PORTS1 }}:{{ SLAVE_PORTS1 }}"
+
+# Create redis cluster
+- name: Create Cluster 
+  docker_container:
+    name: redis-cluster
+    image: redis:5.0.0
+    state: started
+    ports:
+    - "{{ redis_cli_port }}"
+    volumes:
+    - /etc/redis/redis-cli.sh:/redis-cli.sh
+    command: [ "sh", "-c", "echo 'yes'  | redis-cli -a 12345 --cluster create  {{ redis_cluster_master.node1 }}:{{ redis_cluster.port1 }} {{ redis_cluster_master.node2 }}:{{ redis_cluster.port2 }} {{ redis_cluster_master.node3 }}:{{ redis_cluster.port3 }} "] 
+  when: inventory_hostname == "redis1"
+
+
+# add  redis node
+- name: add node 1
+  docker_container:
+    name: redis-cluster1
+    image: redis:5.0.0
+    state: started
+    volumes:
+    - /etc/redis/redis-cli.sh:/redis-cli.sh
+    command: [ "sh", "-c", " redis-cli -a 12345 --cluster add-node \
+    {{ redis_cluster_master.node1 }}:{{ redis_cluster.port1 }} \
+     {{ redis_cluster_master.node2 }}:{{ SLAVE_PORTS }} --cluster-slave "] 
+  when: inventory_hostname == "redis1"
+
+# add  redis node
+- name: add node 2
+  docker_container:
+    name: redis-cluster2
+    image: redis:5.0.0
+    state: started
+    volumes:
+    - /etc/redis/redis-cli.sh:/redis-cli.sh
+    command: [ "sh", "-c", " redis-cli -a 12345 --cluster add-node \
+    {{ redis_cluster_master.node2 }}:{{ redis_cluster.port2 }} \
+     {{ redis_cluster_master.node3 }}:{{ SLAVE_PORTS }} --cluster-slave "] 
+  when: inventory_hostname == "redis1"
+
+  # add  redis node
+- name: add node 3 
+  docker_container:
+    name: redis-cluster3
+    image: redis:5.0.0
+    state: started
+    volumes:
+    - /etc/redis/redis-cli.sh:/redis-cli.sh
+    command: [ "sh", "-c", " redis-cli -a 12345 --cluster add-node \
+    {{ redis_cluster_master.node3 }}:{{ redis_cluster.port3 }} \
+     {{ redis_cluster_master.node1 }}:{{ SLAVE_PORTS }} --cluster-slave "] 
+  when: inventory_hostname == "redis1"

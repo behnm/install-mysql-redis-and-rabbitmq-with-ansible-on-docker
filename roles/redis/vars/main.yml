@@ -1,0 +1,31 @@
+---
+
+# Redis folder 
+redis_folder: /etc/redis
+
+# Redis folder 
+redis_folder1: /redis
+
+# Redis image
+redis_image: redis:5.0.0
+
+# redis docker configpath
+redis_docker_configpath: /usr/local/etc/redis/redis.conf
+
+# Container network name
+container_network: mynet
+
+# Redis cluster nodes
+redis_cluster_master: 
+  node1: 172.17.21.75                   
+  node2: 172.17.21.76          
+  node3: 172.17.21.77  
+
+# Redis Master cluster port
+redis_cluster:
+  port1: 7001
+  port2: 7002
+  port3: 7003
+
+# Redis CLI port number
+redis_cli_port: 6379:6379

@@ -1,0 +1,9 @@
+---
+- hosts: rabbit-servers
+  vars_files:
+    - /etc/ansible/roles/rabbit/vars/main.yml
+    - /etc/ansible/roles/rabbit/vars/vault.yml
+  tasks:
+  - name: play the rabbitmq role
+    include_role:
+      name: rabbit

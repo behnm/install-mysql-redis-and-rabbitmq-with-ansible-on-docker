@@ -1,0 +1,64 @@
+---
+# Remove old conatainers
+- name: Remove container
+  docker_container:
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ rabbit_nodes }}"
+  ignore_errors: yes
+
+# Run rabbitMQ nodes 
+- name: node1 CLuster
+  docker_container:
+    name: "{{  rabbit_nodes[0] }}"
+    hostname: "{{  rabbit_nodes[0] }}"
+    image: "{{ rabbit_image }}:{{ rabbit_image_version }}"
+    networks:
+      - name: "{{ container_network }}"
+    env: 
+      RABBITMQ_ERL_COOKIE: abcdefg
+      RABBITMQ_NODE_NAME: rabbit
+      RABBITMQ_USERNAME: "{{ rabbit_user }}"
+      RABBITMQ_PASSWORD: "{{ rabbit_pass }}"
+    published_ports: 
+    - 5672:5672 
+    - 15672:15672
+    
+
+- name: node2 CLuster
+  docker_container:
+    name: "{{  rabbit_nodes[1] }}"
+    hostname: "{{  rabbit_nodes[1] }}"
+    image: "{{ rabbit_image }}:{{ rabbit_image_version }}"
+    networks:
+      - name: "{{ container_network }}"
+    env: 
+      RABBITMQ_ERL_COOKIE: abcdefg
+      RABBITMQ_NODE_NAME: "{{  rabbit_nodes[1] }}"
+      RABBITMQ_NODE_TYPE: queue-disc
+      RABBITMQ_PASSWORD: "{{ rabbit_pass }}"
+      RABBITMQ_CLUSTER_NODE_NAME: rabbit@node1
+      ENABLE_RAM: "true"
+      RAM_NODE: "true"
+    published_ports: 
+    - 5673:5673 
+    - 15673:15673
+
+- name: node3 CLuster
+  docker_container:
+    name: "{{  rabbit_nodes[2] }}"
+    hostname: "{{  rabbit_nodes[2] }}"
+    image: "{{ rabbit_image }}:{{ rabbit_image_version }}"
+    networks:
+      - name: "{{ container_network }}"
+    env: 
+      RABBITMQ_ERL_COOKIE: abcdefg
+      RABBITMQ_NODE_NAME: "{{  rabbit_nodes[2] }}"
+      RABBITMQ_NODE_TYPE: queue-ram
+      RABBITMQ_PASSWORD: "{{ rabbit_pass }}"
+      RABBITMQ_CLUSTER_NODE_NAME: "rabbit@{{  rabbit_nodes[0] }}"
+      ENABLE_RAM: "true"
+      RAM_NODE: "true"
+    published_ports: 
+    - 5674:5674 
+    - 15674:15674

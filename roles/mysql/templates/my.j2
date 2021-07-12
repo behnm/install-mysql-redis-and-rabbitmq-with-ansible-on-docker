@@ -1,0 +1,7 @@
+[mysqld]
+ndbcluster
+ndb-connectstring={{ mysql_nodes[0] }}
+user=mysql
+
+[mysql_cluster]
+ndb-connectstring={{ mysql_nodes[0] }}
