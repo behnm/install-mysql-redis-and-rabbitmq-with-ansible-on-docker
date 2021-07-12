@@ -1,0 +1,32 @@
+# -------------- Global Service -------------------- #
+
+[redis]
+node1 ansible_host=127.0.0.1
+node2 ansible_host=127.0.0.1
+node3 ansible_host=127.0.0.1
+
+
+# -------------- redis servers -------------------- #
+[redis-servers]
+redis1 MASTER=M1 SLAVE=SM3 MASTER_PORTS=7001 SLAVE_PORTS=7003 MASTER_PORTS1=17001 SLAVE_PORTS1=17003 REDIS_IP=10.1.1.11
+redis2 MASTER=M2 SLAVE=SM1 MASTER_PORTS=7002 SLAVE_PORTS=7001 MASTER_PORTS1=17002 SLAVE_PORTS1=17001 REDIS_IP=10.1.1.12
+redis3 MASTER=M3 SLAVE=SM2 MASTER_PORTS=7003 SLAVE_PORTS=7002 MASTER_PORTS1=17003 SLAVE_PORTS1=17002 REDIS_IP=10.1.1.13
+
+
+# -------------- Docker servers -------------------- #
+[docker-servers]
+node1 ansible_host=127.0.0.1
+node2 ansible_host=127.0.0.1
+node3 ansible_host=127.0.0.1
+
+# -------------- rabbitMQ servers -------------------- #
+[rabbit-servers]
+node1 ansible_host=127.0.0.1
+node2 ansible_host=127.0.0.1
+node3 ansible_host=127.0.0.1
+
+# -------------- Mysql servers ----------------------- #
+[mysql-servers]
+node1 ansible_host=127.0.0.1
+node2 ansible_host=127.0.0.1
+node3 ansible_host=127.0.0.1
